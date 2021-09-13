@@ -1,0 +1,19 @@
+{{!< template-custom}}
+
+{{! The tag above means: insert everything in this file
+into the {body} tag of the default.hbs template }}
+
+{{#post}}
+  {{! Everything inside the #post block pulls data from the page }}
+
+  <article class="article {{post_class}}">
+
+    <section class="gh-content">
+
+      {{content}}
+
+    </section>
+
+  </article>
+
+{{/post}}
