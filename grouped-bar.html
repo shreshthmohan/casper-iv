@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+
+    <link rel="stylesheet" type="text/css" href="./assets/css/styles.css" />
+  </head>
+  <body>
+    <section>
+      <h2 class="text-center">Sizing</h2>
+      <div class="grid grid-cols-2 gap-10">
+        <div class="bg-gray-300" id="bar-1"></div>
+
+        <div>1</div>
+      </div>
+    </section>
+    <script src="./assets/js/viz/d3.v6.min.js"></script>
+    <script src="./assets/js/viz/lodash-4.17.21.min.js"></script>
+    <script src="./assets/js/viz/grouped-bar.js"></script>
+    <script defer>
+      // svgNode, data, dimensions, (options = {});
+      const bar1 = {
+        svgNode: "#bar-1",
+        data: "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4QPF1LhsjQchI05u6WDMEsUAtkjbgfNiu63hbSvk_zuApgo8aHBfco9kPfS1rM7uZSLKISEYI_KM-/pub?gid=1462417346&single=true&output=csv",
+        dimensions: {
+          xField: [{ name: "Month" }],
+          yField: [{ name: "Value" }],
+        },
+      };
+      const metricColumn = "Metrics";
+      const totalLoanAum = "Total Loan AUM";
+      const valueField = "Value";
+      d3.csv(bar1.data).then((data) => {
+        // console.log({ data });
+
+        // function that accepts data and transforms it
+
+        const processData = ({
+          filterBy,
+          filterOn,
+          selectedXFieldValues,
+          xField,
+          data,
+          nameField,
+          valueField,
+        }) => {
+          const filteredData = data.filter((d) => d[filterOn] === filterBy);
+          let processedData = {};
+          filteredData.forEach((d) => {
+            if (!selectedXFieldValues.includes(d[xField])) {
+              return;
+            }
+            if (processedData[d[xField]]) {
+              processedData[d[xField]] = {
+                ...processedData[d[xField]],
+                [d[nameField]]: parseFloat(d[valueField]),
+              };
+            } else {
+              processedData[d[xField]] = {
+                [d[nameField]]: parseFloat(d[valueField]),
+              };
+            }
+          });
+
+          const processedArr = [];
+          Object.keys(processedData).forEach((m) => {
+            processedArr.push({ [xField]: m, ...processedData[m] });
+          });
+
+          const yFields = [];
+          Object.keys(processedArr[0]).forEach((yf) => {
+            if (yf === xField) {
+              return;
+            }
+            yFields.push({ name: yf });
+          });
+
+          return { yFields, processedArr };
+        };
+        const totalAumSetup = {
+          filterBy: "Total Loan AUM",
+          filterOn: "Metrics",
+          selectedXFieldValues: [
+            "2016-17",
+            "2017-18",
+            "2018-19",
+            "2019-20",
+            "2020-21",
+          ],
+          xField: "Month",
+          nameField: "NBFC Name",
+        };
+
+        const totalLoanAumData = data.filter(
+          (d) => d[metricColumn] === totalLoanAum
+        );
+        console.log({ totalLoanAumData });
+
+        // transform data to have multiple columns such that it looks like:
+        // [
+        //   { Muthoot: 2344, Chola: 3456, Month: "2015-16" },
+        //   { Muthoot: 2844, Chola: 4456, Month: "2016-17" },
+        // ];
+        // const allMonths = _.chain(totalLoanAumData).map("Month").uniq().value();
+        // console.log({ allMonths });
+        const xField = "Month";
+        const nameField = "NBFC Name";
+        const selectedYears = [
+          "2016-17",
+          "2017-18",
+          "2018-19",
+          "2019-20",
+          "2020-21",
+        ];
+        let TLAData = {};
+        totalLoanAumData.forEach((d) => {
+          if (!selectedYears.includes(d[xField])) {
+            return;
+          }
+          if (TLAData[d[xField]]) {
+            TLAData[d[xField]] = {
+              ...TLAData[d[xField]],
+              [d[nameField]]: parseFloat(d[valueField]),
+            };
+          } else {
+            TLAData[d[xField]] = {
+              [d[nameField]]: parseFloat(d[valueField]),
+            };
+          }
+        });
+
+        // console.log(TLAData);
+        const TLAArr = [];
+        Object.keys(TLAData).forEach((m) => {
+          TLAArr.push({ [xField]: m, ...TLAData[m] });
+        });
+        console.log({ TLAArr });
+
+        const yFields = [];
+        Object.keys(TLAArr[0]).forEach((yf) => {
+          if (yf === xField) {
+            return;
+          }
+          yFields.push({ name: yf });
+        });
+        console.log({ yFields });
+        renderGroupedBar(
+          bar1.svgNode,
+          TLAArr,
+          {
+            xField: [{ name: "Month" }],
+            yField: yFields,
+          },
+          { marginTop: 50, marginRight: 50, marginBottom: 50, marginLeft: 50 }
+        );
+      });
+
+      // svgNode, data, dimensions, (options = {});
+    </script>
+  </body>
+</html>

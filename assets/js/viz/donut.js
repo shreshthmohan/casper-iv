@@ -30,13 +30,6 @@ const renderDonut = async function (svgNode, data, dimensions, options = {}) {
   const [{ name: arcField }] = arcFields;
   const [{ name: colorField }] = colorFields;
 
-  const margin = {
-    top: marginTop,
-    right: marginRight,
-    bottom: marginBottom,
-    left: marginLeft,
-  };
-
   let fetchedData;
   // data is to be fetched from a url
   if (typeof data === "string") {
@@ -133,6 +126,11 @@ const renderDonut = async function (svgNode, data, dimensions, options = {}) {
   });
   const arcs = pie(fetchedData);
 
+  const arcEval = d3
+    .arc()
+    .innerRadius(innerRadiusFinal) // This is the size of the donut hole
+    .outerRadius(outerRadiusFinal);
+
   // Build the pie chart: Basically, each part of the pie is a path that we build using the arc function.
   chart
     .append("g")
@@ -140,22 +138,44 @@ const renderDonut = async function (svgNode, data, dimensions, options = {}) {
     .selectAll("path")
     .data(arcs)
     .join("path")
-    .attr(
-      "d",
-      d3
-        .arc()
-        .innerRadius(innerRadiusFinal) // This is the size of the donut hole
-        .outerRadius(outerRadiusFinal)
-    )
+    .attr("d", arcEval)
     .attr("fill", function (d) {
       return colorScale(d.data[colorField]);
     })
     .attr("stroke", bgColor);
+
+  chart
+    .append("g")
+    .attr("transform", `translate(${width / 2}, ${height / 2})`)
+    .attr("font-family", "sans-serif")
+    .attr("font-size", 12)
+    .attr("text-anchor", "middle")
+    .attr("fill", "white")
+    .selectAll("text")
+    .data(arcs)
+    .join("text")
+    .attr("transform", (d) => `translate(${arcEval.centroid(d)})`)
+    .call((text) =>
+      text
+        .append("tspan")
+        .attr("y", "-0.4em")
+        .attr("font-weight", "bold")
+        .text((d) => d.data[colorField])
+    )
+    .call((text) =>
+      text
+        // .filter((d) => d.endAngle - d.startAngle > 0.25)
+        .append("tspan")
+        .attr("x", 0)
+        .attr("y", "0.7em")
+        .attr("fill-opacity", 0.7)
+        .text((d) => {
+          return d.data[arcField].toLocaleString();
+        })
+    );
 
   // Render
 
   // Chart Background
   svg.style("background-color", bgColor);
 };
-
-// window.renderDonut = renderDonut;

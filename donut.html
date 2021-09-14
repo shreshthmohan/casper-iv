@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+
+    <link rel="stylesheet" type="text/css" href="./assets/css/styles.css" />
+  </head>
+  <body>
+    <section>
+      <h2 class="text-center">Sizing</h2>
+      <div class="grid grid-cols-2 gap-10">
+        <div class="col-span-2"></div>
+        <div class="bg-gray-300 p-4" id="donut-1"></div>
+        <div>1</div>
+      </div>
+    </section>
+    <script src="./assets/js/viz/d3.v6.min.js"></script>
+    <script src="./assets/js/viz/lodash-4.17.21.min.js"></script>
+    <script src="./assets/js/viz/donut.js"></script>
+    <script defer>
+      //  (svgNode, data, dimensions, options)
+      const donut1 = {
+        svgNode: "#donut-1",
+
+        data: "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4QPF1LhsjQchI05u6WDMEsUAtkjbgfNiu63hbSvk_zuApgo8aHBfco9kPfS1rM7uZSLKISEYI_KM-/pub?gid=56950715&single=true&output=csv", // loan dist for both , for pie
+        dimensions: {
+          arcField: [{ name: "AUM Distribution" }],
+          colorField: [{ name: "Segment" }],
+        },
+        options: {
+          donutThickness: 0.65,
+          chosenColorScheme: "interpolateViridis",
+          // bgColor: "#aaa",
+        },
+        filterField: "NBFC Name",
+      };
+
+      d3.csv(donut1.data).then((data) => {
+        // console.log({data})
+
+        let fetchedData = data;
+        const filterField = donut1.filterField;
+
+        const filterOptions = _.chain(fetchedData)
+          .map(filterField)
+          .uniq()
+          .value()
+          .filter((d) => !!d);
+        const filterSelect = d3.select(donut1.svgNode).append("select");
+        console.log({ filterOptions });
+        filterOptions.forEach((opt, i) => {
+          const optEl = filterSelect
+            .append("option")
+            .attr("value", opt)
+            .text(opt);
+          if (i === 0) {
+            optEl.attr("selected", true);
+            fetchedData = fetchedData.filter((d) => d[filterField] === opt);
+          }
+        });
+        filterSelect.on("change", (e) => {
+          renderDonut(
+            donut1.svgNode,
+            data.filter((d) => d[filterField] === e.target.value),
+            donut1.dimensions,
+            donut1.options
+          );
+        });
+
+        renderDonut(
+          donut1.svgNode,
+          fetchedData,
+          donut1.dimensions,
+          donut1.options
+        );
+      });
+    </script>
+  </body>
+</html>
